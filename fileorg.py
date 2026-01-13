@@ -71,7 +71,7 @@ class FileScanner:
                     filtered["large"].append(path)
 
         elif category == "date":
-            filtered = {"today": [], "yesterday": [], "7d": [], "Older": []}
+            filtered = {"today": [], "yesterday": [], "7d": [], "older": []}
             for file in files:
                 path = files[file][0]
                 creation_time = os.path.getmtime(path)
@@ -121,12 +121,13 @@ class FileMover:
                 continue
             for path in paths:
                 self.mover(path, cat)
-                self.moves.append((path, os.path.join(self.base, cat)))
+                self.moves.append(
+                    (os.path.basename(path), os.path.join(self.base, cat))
+                )
 
     def Undo(self):
         for paths in self.moves:
-            # change the self.moves to give the base name directly instead of changing hre
-            file_path = os.path.join(paths[1], os.path.basename(paths[0]))
+            file_path = os.path.join(paths[1], paths[0])
             self.mover(file_path, self.base)
         for paths in self.moves:
             if os.path.exists(paths[1]):
