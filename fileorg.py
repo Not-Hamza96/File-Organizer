@@ -161,7 +161,7 @@ class FileMover:
         for paths in self.moves:
             if os.path.exists(paths[1]):
                 shutil.rmtree(paths[1], ignore_errors=True)
-        print("Operation Completed✅. Files Moved To Their Original Path")
+        print("Operation Completed✅ . Files Moved To Their Original Path")
 
 
 # a main engine class to handle user input
@@ -197,15 +197,18 @@ class MainEngine:
         while True:
             path = input("Enter The Path of the folder or disk to organize: ")
             if os.path.exists(rf"{path}"):
-                ch = int(input("1. Sort By Type\n2. Sort By Size\n3. Sort By Time: "))
-                if ch == 1:
-                    self.worker("type", path)
-                elif ch == 2:
-                    self.worker("size", path)
-                elif ch == 3:
-                    self.worker("date", path)
-                else:
-                    print("Invalid Choice")
+                try:
+                    ch = int(input("1. Sort By Type\n2. Sort By Size\n3. Sort By Time: "))
+                    if ch == 1:
+                        self.worker("type", path)
+                    elif ch == 2:
+                        self.worker("size", path)
+                    elif ch == 3:
+                        self.worker("date", path)
+                    else:
+                        print("Invalid Choice")
+                except ValueError:
+                    print("Please Enter a number")
             else:
                 print("Path Does not Exist")
 
