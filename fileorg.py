@@ -99,7 +99,7 @@ class FileScanner:
                 elif time_passed < 7:
                     filtered["7d"].append(path)
                 else:
-                    filtered["Older"].append(path)
+                    filtered["older"].append(path)
         return filtered
 
 
@@ -135,33 +135,44 @@ class FileMover:
             for path in paths:
                 print(f"Moving {os.path.basename(path)} to {cat} Folder")
 
-    # a file mover function to move files by accessing their path from the filtered data
+    # a file mover function to move files by accessing their path from the filtered data using threadpoolexecuter
     def file_mover(self):
         # creating folders
         self.folder_creator()
-        for cat, paths in self.data.items():
-            if not paths:
-                continue
-            for path in paths:
-                self.mover(path, cat)
-                # appending the file moves into the self.moves list in the form of a tuple with the file name and folder path
-                self.moves.append(
-                    (os.path.basename(path), os.path.join(self.base, cat))
-                )
-            print(f"{len(self.data[cat])} Files moved to {cat} Folder")
+        with ThreadPoolExecutor() as exe:
+            processes = []
+            for cat, paths in self.data.items():
+                if not paths:
+                    continue
+                for path in paths:
+                    result = exe.submit(self.mover, path, cat)
+                    processes.append(result)
+                    # appending the file moves into the self.moves list in the form of a tuple with the file name and folder path
+                    self.moves.append(
+                        (os.path.basename(path), os.path.join(self.base, cat))
+                    )
+
+                print(f"{len(self.data[cat])} Files moved to {cat} Folder")
         print("Operation Completed✅")
 
     # an undo function for the recently moved files
     def Undo(self):
-        for paths in self.moves:
-            # accessing the self.moves to undo the movement
-            file_path = os.path.join(paths[1], paths[0])
-            self.mover(file_path, self.base)
+
+        with ThreadPoolExecutor() as e:
+
+            for paths in self.moves:
+                # accessing the self.moves to undo the movement
+                file_path = os.path.join(paths[1], paths[0])
+                res = e.submit(self.mover, file_path, self.base)
+
         # deleting the folders created
-        for paths in self.moves:
-            if os.path.exists(paths[1]):
-                shutil.rmtree(paths[1], ignore_errors=True)
-        print("Operation Completed✅ . Files Moved To Their Original Path")
+
+        with ThreadPoolExecutor() as e:
+            for paths in self.moves:
+                if os.path.exists(paths[1]):
+                    res = e.submit(shutil.rmtree, paths[1], ignore_errors=True)
+
+            print("Operation Completed✅ . Files Moved To Their Original Path")
 
 
 # a main engine class to handle user input
@@ -191,14 +202,17 @@ class MainEngine:
 
     # a main method to handle user input
     def main(self):
-        print("-" * 32)
-        print("File Organizer".center(32))
-        print("-" * 32)
+
         while True:
+            print("-" * 32)
+            print("File Organizer".center(32))
+            print("-" * 32)
             path = input("Enter The Path of the folder or disk to organize: ")
             if os.path.exists(rf"{path}"):
                 try:
-                    ch = int(input("1. Sort By Type\n2. Sort By Size\n3. Sort By Time: "))
+                    ch = int(
+                        input("1. Sort By Type\n2. Sort By Size\n3. Sort By Time: ")
+                    )
                     if ch == 1:
                         self.worker("type", path)
                     elif ch == 2:
